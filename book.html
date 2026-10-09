@@ -52,11 +52,18 @@ const ALLOWED_HOSTS = [
 
 const $ = (id) => document.getElementById(id);
 
-function fail(reason) {
+// Customer-facing reasons — safe to show, never include payload values.
+const REASONS = {
+  missing: "The link has no booking details. Open it by tapping the link in the chat, not by typing or copying the address.",
+  damaged: "The link's booking details are incomplete — it may have been cut off when it was copied.",
+  destination: "The booking destination in the link isn't one this page is allowed to open.",
+};
+
+function fail(kind, detail) {
   $("title").textContent = "This booking link can't be opened";
-  $("msg").textContent = "Please go back to the chat and ask for a new link.";
+  $("msg").textContent = REASONS[kind] + " Please go back to the chat and ask for a new link.";
   $("msg").className = "err";
-  console.error("booking launcher:", reason);
+  console.error("booking launcher:", kind, detail || "");
 }
 
 function readPayload() {
@@ -90,15 +97,15 @@ function buildForm(payload) {
 
 (function launch() {
   let payload;
-  try { payload = readPayload(); } catch (err) { return fail("could not decode the link: " + err.message); }
+  try { payload = readPayload(); } catch (err) { return fail("damaged", err.message); }
   // Drop the payload from the address bar and browser history before anything else.
   history.replaceState(null, "", location.pathname + location.search);
-  if (!payload) return fail("no #j= or #p= payload in the link");
+  if (!payload) return fail("missing");
 
   let url;
-  try { url = new URL(payload.post_url); } catch { return fail("post_url is not a valid URL"); }
-  if (url.protocol !== "https:") return fail("post_url is not https");
-  if (!ALLOWED_HOSTS.includes(url.hostname)) return fail("host not allow-listed: " + url.hostname);
+  try { url = new URL(payload.post_url); } catch { return fail("destination", "post_url is not a valid URL"); }
+  if (url.protocol !== "https:") return fail("destination", "post_url is not https");
+  if (!ALLOWED_HOSTS.includes(url.hostname)) return fail("destination", "host not allow-listed: " + url.hostname);
 
   const form = buildForm(payload);
   form.submit();
