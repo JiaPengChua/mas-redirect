@@ -18,3 +18,9 @@ mas-sreac-pages). The fragment is never sent to a server, and the page removes
 it from the address bar before submitting.
 
 The page refuses to POST anywhere outside `ALLOWED_HOSTS`.
+
+## Test page
+
+`test.html` embeds the `malaysiaairlines-sandbox` bot **without** acting on the
+`flight_booking` / `express_booking` / `flight_reaccommodation` events (it only
+lists them), so the "tap here" booking link stays in the chat for testing.

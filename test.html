@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MAS booking link — test page</title>
+<style>
+  :root{ --bg:#f5f6f8; --card:#fff; --ink:#12161c; --muted:#5b6472; --line:#e3e6ec; --brand:#00539f; --ok:#0d7a4b; }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0f1216; --card:#161b22; --ink:#e8ecf1; --muted:#98a2b3; --line:#242c36; --brand:#4da3ff; --ok:#4ade80; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:640px;margin:0 auto;padding:32px 16px 96px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin-bottom:16px}
+  h1{font-size:19px;margin:0 0 6px} h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 10px}
+  p,li{color:var(--muted)} ol{padding-left:20px;margin:0}
+  pre{margin:0;padding:12px;background:var(--bg);border:1px solid var(--line);border-radius:8px;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap}
+  code{font:12px ui-monospace,SFMono-Regular,Menlo,monospace}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>Booking link — test page</h1>
+    <p>Chat with the <code>malaysiaairlines-sandbox</code> bot here. Unlike the mas-sreac-pages page, this page does
+      <strong>not</strong> redirect when Ada fires a booking event, so the "tap here" link stays in the chat for you to test.</p>
+  </div>
+  <div class="card">
+    <h2>Steps</h2>
+    <ol>
+      <li>Open the chat (bottom right). When asked "Would you like to sign in?", choose <strong>Yes</strong> and sign in to Enrich.</li>
+      <li>Type <code>test flight booking</code>, choose <strong>Express booking</strong>, then answer: one-way, trip details, confirm, cabin.</li>
+      <li>Tap <strong>"tap here to continue to your booking"</strong> in the chat. It opens the booking page in a new tab.</li>
+    </ol>
+  </div>
+  <div class="card">
+    <h2>Events Ada fired on this page</h2>
+    <pre id="log">(none yet — booking events will be listed here, but not acted on)</pre>
+  </div>
+</div>
+<script>
+  // Record booking events without redirecting, and without printing their data.
+  function note(name) {
+    return function () {
+      const el = document.getElementById("log");
+      if (el.textContent.startsWith("(none")) el.textContent = "";
+      el.textContent += new Date().toLocaleTimeString() + "  " + name + " fired (auto-redirect is off here — use the link in the chat)\n";
+    };
+  }
+  window.adaSettings = {
+    eventCallbacks: {
+      flight_booking: note("flight_booking"),
+      express_booking: note("express_booking"),
+      flight_reaccommodation: note("flight_reaccommodation"),
+    },
+  };
+</script>
+<script id="__ada" data-handle="malaysiaairlines-sandbox" src="https://static.ada.support/embed2.js" async></script>
+</body>
+</html>
