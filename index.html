@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MAS booking redirect — demo</title>
+<style>
+  :root{ --bg:#f5f6f8; --card:#fff; --ink:#12161c; --muted:#5b6472; --line:#e3e6ec; }
+  @media (prefers-color-scheme: dark){ :root{ --bg:#0f1216; --card:#161b22; --ink:#e8ecf1; --muted:#98a2b3; --line:#242c36; } }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:640px;margin:0 auto;padding:32px 16px 96px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin-bottom:16px}
+  h1{font-size:19px;margin:0 0 6px} p,li{color:var(--muted)} ol{padding-left:20px;margin:0}
+  code{font:12px ui-monospace,SFMono-Regular,Menlo,monospace}
+</style>
+
+<!-- 1. Booking redirect handler: must load BEFORE the Ada embed. -->
+<script src="ada-booking-handler.js"></script>
+<!-- 2. The Ada embed. -->
+<script id="__ada" data-handle="malaysiaairlines-sandbox" src="https://static.ada.support/embed2.js" async></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>Booking redirect — demo</h1>
+    <p>This page stands in for the MAS website. It hosts the <code>malaysiaairlines-sandbox</code> chat with the booking
+      redirect handler. When the bot hands off a booking, this page opens the booking page and reports the outcome to Ada.</p>
+  </div>
+  <div class="card">
+    <ol>
+      <li>Open the chat and run <code>test flight booking</code> (sign in for express booking, or continue as a guest).</li>
+      <li>After you choose a cabin, the bot says it's taking you to the booking page and this tab moves there.</li>
+      <li>In the Ada dashboard, the conversation's variables show <code>booking_handler</code> and
+        <code>booking_redirect_status</code> (<code>submitted</code> or <code>failed</code>, with a reason).</li>
+    </ol>
+  </div>
+</div>
+</body>
+</html>
