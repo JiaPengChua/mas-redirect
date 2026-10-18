@@ -3,6 +3,10 @@ main = "worker.js"
 compatibility_date = "2026-10-01"
 
 [vars]
-ALLOWED_ORIGINS = "https://jiapengchua.github.io"
+# Sites allowed to send alerts (exact origins, comma-separated, no trailing slash).
+#   https://jiapengchua.github.io    demo / test pages
+#   https://uat.malaysiaairlines.com MAS UAT (includes the app chatbot page /hq/app/chatbot.html)
+# For production, add: https://www.malaysiaairlines.com
+ALLOWED_ORIGINS = "https://jiapengchua.github.io,https://uat.malaysiaairlines.com"
 ADA_DASHBOARD_URL = "https://malaysiaairlines-sandbox.ada.support"
 # SLACK_WEBHOOK_URL is a secret: npx wrangler secret put SLACK_WEBHOOK_URL

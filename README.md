@@ -80,3 +80,25 @@ npx wrangler deploy                         # prints the Worker URL
 
 Then set `alertUrl` in `ada-booking-handler.js` to the Worker URL, and list the
 sites hosting the chat in `ALLOWED_ORIGINS` (`alert-relay/wrangler.toml`).
+
+## Rolling out on MAS UAT
+
+MAS UAT (`https://uat.malaysiaairlines.com`, including the app chatbot page) already
+hosts the sandbox chat. To add the handler there:
+
+1. MAS hosts a copy of `ada-booking-handler.js` on their UAT site, with
+   `alertUrl` set to the deployed relay URL. The UAT booking and self-reaccommodation
+   hosts are already in its `CONFIG`.
+2. Load it **after** any existing `window.adaSettings` on the page and **before**
+   `embed2.js`. It merges into existing settings and keeps their other options, but
+   it replaces any existing `flight_booking` / `express_booking` /
+   `flight_reaccommodation` callbacks.
+
+   ```html
+   <script src="/path/to/ada-booking-handler.js"></script>
+   <script id="__ada" data-handle="malaysiaairlines-sandbox" src="https://static.ada.support/embed2.js" async></script>
+   ```
+
+3. `https://uat.malaysiaairlines.com` is already in the relay's `ALLOWED_ORIGINS`.
+   For production, add `https://www.malaysiaairlines.com` there and switch the
+   handler's hosts and endpoint to production.
