@@ -58,3 +58,25 @@ Edit `CONFIG` at the top of the script for production hosts (`bookingHosts`,
 the page; an error on the booking site itself is outside its view.
 
 `index.html` is a demo page using it.
+
+## Slack alerts for failed redirects
+
+When `CONFIG.alertUrl` is set, the handler sends a `navigator.sendBeacon` to the
+relay in `alert-relay/` on every failure. The relay (a Cloudflare Worker) checks
+the sending site, rate-limits (20/min), drops duplicates, and posts to Slack. The
+Slack webhook URL lives only in the Worker as a secret.
+
+Each alert carries an ID that is also saved on the Ada conversation as
+`booking_redirect_id`, so the conversation can be found from the alert.
+
+Deploy:
+
+```bash
+cd alert-relay
+npx wrangler login                          # one-time, opens a browser
+npx wrangler secret put SLACK_WEBHOOK_URL   # paste the Slack webhook URL
+npx wrangler deploy                         # prints the Worker URL
+```
+
+Then set `alertUrl` in `ada-booking-handler.js` to the Worker URL, and list the
+sites hosting the chat in `ALLOWED_ORIGINS` (`alert-relay/wrangler.toml`).

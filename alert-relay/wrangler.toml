@@ -1,0 +1,8 @@
+name = "mas-booking-alert-relay"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+ALLOWED_ORIGINS = "https://jiapengchua.github.io"
+ADA_DASHBOARD_URL = "https://malaysiaairlines-sandbox.ada.support"
+# SLACK_WEBHOOK_URL is a secret: npx wrangler secret put SLACK_WEBHOOK_URL

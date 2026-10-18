@@ -41,6 +41,8 @@
     notifyCustomer: true,
     // How long to wait for Ada to record the outcome before navigating away (ms).
     reportTimeoutMs: 1500,
+    // Alert relay that forwards failures to Slack (see alert-relay/). null = alerts off.
+    alertUrl: null,
   };
 
   /* ------------------------------------------------------------ REPORTING */
@@ -50,8 +52,10 @@
       booking_redirect_event: eventName,
       booking_redirect_reason: reason || "",
       booking_redirect_at: new Date().toISOString(),
+      booking_redirect_id: newAlertId(),
     };
     (status === "failed" ? console.error : console.log)("[ada-booking] " + eventName + " " + status + (reason ? ": " + reason : ""));
+    if (status === "failed") alertSlack(fields);
 
     var send;
     try {
@@ -65,6 +69,27 @@
     return Promise.race([send, timeout]).catch(function (err) {
       console.warn("[ada-booking] could not report to Ada:", err && err.message);
     });
+  }
+
+  function newAlertId() {
+    return Math.random().toString(36).slice(2, 10);
+  }
+
+  // Fire-and-forget: sendBeacon survives page navigation and needs no CORS preflight.
+  function alertSlack(fields) {
+    if (!CONFIG.alertUrl || !navigator.sendBeacon) return;
+    try {
+      var body = JSON.stringify({
+        event: fields.booking_redirect_event,
+        reason: fields.booking_redirect_reason,
+        at: fields.booking_redirect_at,
+        alert_id: fields.booking_redirect_id,
+        page: location.origin + location.pathname,
+      });
+      navigator.sendBeacon(CONFIG.alertUrl, new Blob([body], { type: "text/plain" }));
+    } catch (err) {
+      console.warn("[ada-booking] could not send alert:", err && err.message);
+    }
   }
 
   function notify(message) {
