@@ -40,8 +40,13 @@ function slackMessage(a, dashboard) {
   ];
   if (dashboard) lines.push(`<${dashboard}/insights/conversations|Open Ada conversations>`);
   const text = lines.join("\n");
-  // `text` works for incoming webhooks; the flat fields serve Workflow Builder webhooks.
-  return { text, event: a.event, reason: a.reason, page: a.page, at: a.at, alert_id: a.alert_id };
+  return text;
+}
+
+// Workflow Builder webhooks (hooks.slack.com/triggers/...) expect exactly the variables defined in the
+// workflow — set it up with a single `text` variable. Incoming webhooks (/services/...) take { text }.
+function slackBody(webhookUrl, text) {
+  return JSON.stringify({ text });
 }
 
 export default {
@@ -73,7 +78,7 @@ export default {
 
     ctx.waitUntil(fetch(env.SLACK_WEBHOOK_URL, {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify(slackMessage(alert, env.ADA_DASHBOARD_URL)),
+      body: slackBody(env.SLACK_WEBHOOK_URL, slackMessage(alert, env.ADA_DASHBOARD_URL)),
     }).catch(() => {}));
     return new Response(null, { status: 204, headers: cors(origin) });
   },
