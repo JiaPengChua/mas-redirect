@@ -92,6 +92,13 @@ npx wrangler secret put TEAMS_WEBHOOK_URL   # Teams Workflows URL (optional)
 npx wrangler deploy                         # prints the Worker URL
 ```
 
+Deployed: `https://mh-booking-redirect.mag-alerts.workers.dev` (Worker `mh-booking-redirect`;
+one Worker per use case under the `mag-alerts` account subdomain). Watch deliveries with
+`npx wrangler tail mh-booking-redirect`.
+
+```bash
+```
+
 ### Teams webhook
 
 In the Teams channel: **⋯ → Workflows** → template **"Post to a channel when a

@@ -42,7 +42,7 @@
     // How long to wait for Ada to record the outcome before navigating away (ms).
     reportTimeoutMs: 1500,
     // Alert relay that forwards failures to Slack/Teams (see alert-relay/). null = alerts off.
-    alertUrl: null,
+    alertUrl: "https://mh-booking-redirect.mag-alerts.workers.dev/",
     // After submitting, how long to wait for the browser to start leaving the page (ms).
     // If it hasn't, something silently blocked the redirect (e.g. a security policy).
     navigationTimeoutMs: 4000,
