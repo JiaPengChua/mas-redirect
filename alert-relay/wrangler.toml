@@ -12,3 +12,9 @@ ADA_DASHBOARD_URL = "https://malaysiaairlines-sandbox.ada.support"
 # Destinations are secrets — set one or both:
 #   npx wrangler secret put SLACK_WEBHOOK_URL
 #   npx wrangler secret put TEAMS_WEBHOOK_URL
+
+# Keep every invocation and its logs (searchable in the Cloudflare dashboard for a few days),
+# so an alert can be traced afterwards, not only while `wrangler tail` is running.
+[observability]
+enabled = true
+head_sampling_rate = 1

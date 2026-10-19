@@ -18,6 +18,20 @@ const PER_MINUTE = 20;           // per site, per Worker instance (best effort)
 const recent = new Map();        // site -> timestamps (ms) in the last minute
 const seenIds = new Map();       // alert_id -> time, to drop duplicates
 
+// "19 Oct 2026, 12:13:19 pm (SGT)" — alerts are read in Singapore, so show Singapore time, labelled.
+function sgt(iso) {
+  const d = new Date(iso);
+  const when = isNaN(d) ? new Date() : d;
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Singapore", day: "numeric", month: "short", year: "numeric",
+    hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true,
+  }).formatToParts(when).map((x) => [x.type, x.value]));
+  return `${p.day} ${p.month} ${p.year}, ${p.hour}:${p.minute}:${p.second} ${String(p.dayPeriod).toLowerCase()} (SGT)`;
+}
+
+const FIND_HINT = (id) => `Find the Ada conversation whose booking_redirect_id is ${id} — it may not be the newest one. ` +
+  "Test alerts sent without a chat have no conversation.";
+
 const clip = (v, n) => String(v == null ? "" : v).replace(/[\u0000-\u001f]/g, " ").slice(0, n);
 
 function cors(origin) {
@@ -37,10 +51,11 @@ function slackMessage(a, dashboard) {
     `*Event:* ${a.event}`,
     `*Reason:* ${a.reason || "unknown"}`,
     `*Page:* ${a.page || "unknown"}`,
-    `*When:* ${a.at || new Date().toISOString()}`,
-    `*Alert ID:* \`${a.alert_id}\` — also saved on the Ada conversation as \`booking_redirect_id\``,
+    `*When:* ${sgt(a.at)}`,
+    `*Alert ID:* \`${a.alert_id}\``,
+    `_${FIND_HINT(a.alert_id)}_`,
   ];
-  if (dashboard) lines.push(`<${dashboard}/insights/conversations|Open Ada conversations>`);
+  if (dashboard) lines.push(`<${dashboard}/insights/conversations|Ada conversation list>`);
   const text = lines.join("\n");
   return text;
 }
@@ -64,12 +79,12 @@ function teamsBody(a, dashboard) {
         { title: "Event", value: a.event },
         { title: "Reason", value: a.reason || "unknown" },
         { title: "Page", value: a.page || "unknown" },
-        { title: "When", value: a.at || new Date().toISOString() },
+        { title: "When", value: sgt(a.at) },
         { title: "Alert ID", value: a.alert_id },
       ] },
-      { type: "TextBlock", text: "The alert ID is also saved on the Ada conversation as booking_redirect_id.", isSubtle: true, size: "Small", wrap: true },
+      { type: "TextBlock", text: FIND_HINT(a.alert_id), isSubtle: true, size: "Small", wrap: true },
     ],
-    actions: dashboard ? [{ type: "Action.OpenUrl", title: "Open Ada conversations", url: `${dashboard}/insights/conversations` }] : [],
+    actions: dashboard ? [{ type: "Action.OpenUrl", title: "Ada conversation list", url: `${dashboard}/insights/conversations` }] : [],
   };
   return JSON.stringify({ type: "message", attachments: [{ contentType: "application/vnd.microsoft.card.adaptive", contentUrl: null, content: card }] });
 }
