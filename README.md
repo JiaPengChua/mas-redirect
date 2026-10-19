@@ -59,12 +59,12 @@ the page; an error on the booking site itself is outside its view.
 
 `index.html` is a demo page using it.
 
-## Slack alerts for failed redirects
+## Slack / Teams alerts for failed redirects
 
 When `CONFIG.alertUrl` is set, the handler sends a `navigator.sendBeacon` to the
 relay in `alert-relay/` on every failure. The relay (a Cloudflare Worker) checks
-the sending site, rate-limits (20/min), drops duplicates, and posts to Slack. The
-Slack webhook URL lives only in the Worker as a secret.
+the sending site, rate-limits (20/min), drops duplicates, and posts to Slack, Microsoft
+Teams, or both. The webhook URLs live only in the Worker as secrets.
 
 Each alert carries an ID that is also saved on the Ada conversation as
 `booking_redirect_id`, so the conversation can be found from the alert.
@@ -74,9 +74,17 @@ Deploy:
 ```bash
 cd alert-relay
 npx wrangler login                          # one-time, opens a browser
-npx wrangler secret put SLACK_WEBHOOK_URL   # paste the Slack webhook URL
+npx wrangler secret put SLACK_WEBHOOK_URL   # Slack webhook URL (optional)
+npx wrangler secret put TEAMS_WEBHOOK_URL   # Teams Workflows URL (optional)
 npx wrangler deploy                         # prints the Worker URL
 ```
+
+### Teams webhook
+
+In the Teams channel: **⋯ → Workflows** → template **"Post to a channel when a
+webhook request is received"** → confirm the team and channel → **Add workflow**,
+then copy the URL it shows. (The older "Incoming Webhook" connector is retired.)
+The relay posts an Adaptive Card. The tenant admin must allow the Workflows app.
 
 Then set `alertUrl` in `ada-booking-handler.js` to the Worker URL, and list the
 sites hosting the chat in `ALLOWED_ORIGINS` (`alert-relay/wrangler.toml`).

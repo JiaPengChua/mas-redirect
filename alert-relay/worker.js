@@ -3,10 +3,12 @@
 
   The booking handler on the website sends a beacon here when a redirect fails.
   This Worker checks it came from an allowed site, rate-limits, and posts the
-  alert to Slack. The Slack webhook URL stays here as a secret, never in page code.
+  alert to Slack and/or Microsoft Teams. The webhook URLs stay here as secrets,
+  never in page code. Set at least one of them.
 
   Settings (Cloudflare dashboard or `wrangler secret put` / wrangler.toml [vars]):
     SLACK_WEBHOOK_URL  (secret)  Slack incoming-webhook or Workflow Builder webhook URL
+    TEAMS_WEBHOOK_URL  (secret)  Teams Workflows URL ("Post to a channel when a webhook request is received")
     ALLOWED_ORIGINS    (var)     comma-separated sites allowed to send alerts
     ADA_DASHBOARD_URL  (var)     e.g. https://malaysiaairlines-sandbox.ada.support
 */
@@ -49,6 +51,33 @@ function slackBody(webhookUrl, text) {
   return JSON.stringify({ text });
 }
 
+// Teams Workflows ("Post to a channel when a webhook request is received") expects a message whose
+// attachments carry an Adaptive Card.
+function teamsBody(a, dashboard) {
+  const card = {
+    $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+    type: "AdaptiveCard",
+    version: "1.4",
+    body: [
+      { type: "TextBlock", text: "\u{1F6A8} Booking redirect failed", weight: "Bolder", size: "Medium", color: "Attention", wrap: true },
+      { type: "FactSet", facts: [
+        { title: "Event", value: a.event },
+        { title: "Reason", value: a.reason || "unknown" },
+        { title: "Page", value: a.page || "unknown" },
+        { title: "When", value: a.at || new Date().toISOString() },
+        { title: "Alert ID", value: a.alert_id },
+      ] },
+      { type: "TextBlock", text: "The alert ID is also saved on the Ada conversation as booking_redirect_id.", isSubtle: true, size: "Small", wrap: true },
+    ],
+    actions: dashboard ? [{ type: "Action.OpenUrl", title: "Open Ada conversations", url: `${dashboard}/insights/conversations` }] : [],
+  };
+  return JSON.stringify({ type: "message", attachments: [{ contentType: "application/vnd.microsoft.card.adaptive", contentUrl: null, content: card }] });
+}
+
+function post(url, body) {
+  return fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body });
+}
+
 export default {
   async fetch(request, env, ctx) {
     const origin = request.headers.get("Origin") || "";
@@ -56,7 +85,7 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: allowed.includes(origin) ? cors(origin) : {} });
     if (request.method !== "POST") return new Response("Method not allowed", { status: 405 });
     if (!allowed.includes(origin)) return new Response("Forbidden", { status: 403 });
-    if (!env.SLACK_WEBHOOK_URL) return new Response("Not configured", { status: 500 });
+    if (!env.SLACK_WEBHOOK_URL && !env.TEAMS_WEBHOOK_URL) return new Response("Not configured", { status: 500 });
 
     const body = await request.text();
     if (body.length > MAX_BODY) return new Response("Too large", { status: 413 });
@@ -76,10 +105,11 @@ export default {
     for (const [k, t] of seenIds) if (now - t > 3600000) seenIds.delete(k);
     if (rateLimited(origin, now)) return new Response("Rate limited", { status: 429, headers: cors(origin) });
 
-    ctx.waitUntil(fetch(env.SLACK_WEBHOOK_URL, {
-      method: "POST", headers: { "content-type": "application/json" },
-      body: slackBody(env.SLACK_WEBHOOK_URL, slackMessage(alert, env.ADA_DASHBOARD_URL)),
-    }).catch(() => {}));
+    // Each destination is independent: one failing never stops the other.
+    const sends = [];
+    if (env.SLACK_WEBHOOK_URL) sends.push(post(env.SLACK_WEBHOOK_URL, slackBody(env.SLACK_WEBHOOK_URL, slackMessage(alert, env.ADA_DASHBOARD_URL))));
+    if (env.TEAMS_WEBHOOK_URL) sends.push(post(env.TEAMS_WEBHOOK_URL, teamsBody(alert, env.ADA_DASHBOARD_URL)));
+    ctx.waitUntil(Promise.allSettled(sends));
     return new Response(null, { status: 204, headers: cors(origin) });
   },
 };

@@ -9,4 +9,6 @@ compatibility_date = "2026-10-01"
 # For production, add: https://www.malaysiaairlines.com
 ALLOWED_ORIGINS = "https://jiapengchua.github.io,https://uat.malaysiaairlines.com"
 ADA_DASHBOARD_URL = "https://malaysiaairlines-sandbox.ada.support"
-# SLACK_WEBHOOK_URL is a secret: npx wrangler secret put SLACK_WEBHOOK_URL
+# Destinations are secrets — set one or both:
+#   npx wrangler secret put SLACK_WEBHOOK_URL
+#   npx wrangler secret put TEAMS_WEBHOOK_URL
