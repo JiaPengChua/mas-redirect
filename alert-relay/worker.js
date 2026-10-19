@@ -74,8 +74,11 @@ function teamsBody(a, dashboard) {
   return JSON.stringify({ type: "message", attachments: [{ contentType: "application/vnd.microsoft.card.adaptive", contentUrl: null, content: card }] });
 }
 
-function post(url, body) {
-  return fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body });
+// Logs only the destination name and HTTP status (visible with `wrangler tail`), never the URL.
+function post(name, url, body) {
+  return fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body }).then(
+    (r) => { console.log(`[relay] ${name} -> HTTP ${r.status}`); return r; },
+    (e) => { console.log(`[relay] ${name} -> error ${e && e.message}`); throw e; });
 }
 
 export default {
@@ -107,8 +110,8 @@ export default {
 
     // Each destination is independent: one failing never stops the other.
     const sends = [];
-    if (env.SLACK_WEBHOOK_URL) sends.push(post(env.SLACK_WEBHOOK_URL, slackBody(env.SLACK_WEBHOOK_URL, slackMessage(alert, env.ADA_DASHBOARD_URL))));
-    if (env.TEAMS_WEBHOOK_URL) sends.push(post(env.TEAMS_WEBHOOK_URL, teamsBody(alert, env.ADA_DASHBOARD_URL)));
+    if (env.SLACK_WEBHOOK_URL) sends.push(post("slack", env.SLACK_WEBHOOK_URL, slackBody(env.SLACK_WEBHOOK_URL, slackMessage(alert, env.ADA_DASHBOARD_URL))));
+    if (env.TEAMS_WEBHOOK_URL) sends.push(post("teams", env.TEAMS_WEBHOOK_URL, teamsBody(alert, env.ADA_DASHBOARD_URL)));
     ctx.waitUntil(Promise.allSettled(sends));
     return new Response(null, { status: 204, headers: cors(origin) });
   },

@@ -1,4 +1,4 @@
-name = "mas-booking-alert-relay"
+name = "mh-booking-redirect"
 main = "worker.js"
 compatibility_date = "2026-10-01"
 
