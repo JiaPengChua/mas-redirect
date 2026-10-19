@@ -52,6 +52,19 @@ It reports to Ada as metavariables on the conversation:
 | `booking_redirect_reason` | short reason on failure (no URL, not https, host not allowed, handler error) |
 | `booking_redirect_at` | timestamp |
 
+**Silent blocks.** After submitting, the handler also checks the redirect actually
+happened. A site security policy with a `form-action` rule makes the browser block
+the booking form without any error; the handler catches that from the browser's
+`securitypolicyviolation` event and reports `blocked by the page's security policy
+(form-action)`. If the browser simply never starts leaving the page within
+`navigationTimeoutMs` (4 s), it reports `browser did not leave the page`. A slow
+booking site does not trigger this: the browser has already started leaving.
+
+**Simulating a failure.** `simulate-failure.html` is the demo page plus a
+`form-action 'self'` security policy — a realistic change a site could make. Chat as
+normal; when the bot hands off the booking, the browser blocks the form and the
+failure path runs for real (notice, Ada metavariables, alert).
+
 Edit `CONFIG` at the top of the script for production hosts (`bookingHosts`,
 `sreacHosts`, `sreacEndpoint`) and to turn the on-page failure notice on or off
 (`notifyCustomer`). The handler can only see failures before the browser leaves

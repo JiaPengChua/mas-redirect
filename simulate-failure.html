@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>Simulate a failed booking redirect</title>
+<style>
+  :root{ --bg:#f5f6f8; --card:#fff; --ink:#12161c; --muted:#5b6472; --line:#e3e6ec; --warn:#a8500a; }
+  @media (prefers-color-scheme: dark){ :root{ --bg:#0f1216; --card:#161b22; --ink:#e8ecf1; --muted:#98a2b3; --line:#242c36; --warn:#fbbf24; } }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:640px;margin:0 auto;padding:32px 16px 96px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin-bottom:16px}
+  h1{font-size:19px;margin:0 0 6px} p,li{color:var(--muted)} ol{padding-left:20px;margin:0}
+  .warn{color:var(--warn);font-weight:600}
+  code{font:12px ui-monospace,SFMono-Regular,Menlo,monospace}
+</style>
+
+<!-- A realistic site-side failure: a Content Security Policy that only lets forms post to this site.
+     A client hardening their site could add exactly this. The browser then blocks the booking form. -->
+<meta http-equiv="Content-Security-Policy" content="form-action 'self'" />
+<!-- The handler and embed are unchanged from the real demo page. -->
+<script src="ada-booking-handler.js"></script>
+<script id="__ada" data-handle="malaysiaairlines-sandbox" src="https://static.ada.support/embed2.js" async></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>Simulate a failed booking redirect</h1>
+    <p class="warn">This page has a security policy that blocks the booking form.</p>
+    <p>It reproduces a realistic failure — a site tightening its Content Security Policy
+      (<code>form-action 'self'</code>) — with the bot and the handler unchanged. The browser genuinely
+      blocks the redirect, and the handler detects it.</p>
+  </div>
+  <div class="card">
+    <ol>
+      <li>Open the chat, answer the sign-in question (either answer works), then type <code>test flight booking</code>.</li>
+      <li>Finish the booking questions and pick a cabin.</li>
+      <li>When the bot hands off the booking, the browser blocks the form: a red notice appears on this page,
+        the failure is saved on the Ada conversation (<code>booking_redirect_status = failed</code>, reason
+        <code>blocked by the page's security policy (form-action)</code>), and an alert goes to Teams/Slack
+        once the relay is live.</li>
+    </ol>
+  </div>
+</div>
+</body>
+</html>

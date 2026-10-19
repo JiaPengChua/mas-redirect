@@ -41,8 +41,11 @@
     notifyCustomer: true,
     // How long to wait for Ada to record the outcome before navigating away (ms).
     reportTimeoutMs: 1500,
-    // Alert relay that forwards failures to Slack (see alert-relay/). null = alerts off.
+    // Alert relay that forwards failures to Slack/Teams (see alert-relay/). null = alerts off.
     alertUrl: null,
+    // After submitting, how long to wait for the browser to start leaving the page (ms).
+    // If it hasn't, something silently blocked the redirect (e.g. a security policy).
+    navigationTimeoutMs: 4000,
   };
 
   /* ------------------------------------------------------------ REPORTING */
@@ -142,6 +145,38 @@
     form.submit();
   }
 
+  // Starts the navigation, then checks nothing silently blocked it.
+  // - A Content Security Policy `form-action` rule blocks the booking form without throwing; the
+  //   browser only fires a `securitypolicyviolation` event (and Chrome still fires `beforeunload`
+  //   first). That event is reported at once.
+  // - Otherwise, if the browser never starts leaving the page within navigationTimeoutMs, report it.
+  //   A slow booking site is fine: the browser has already started leaving.
+  // Errors on the booking site after the page has gone are out of reach.
+  function navigateAndWatch(eventName, start) {
+    var left = false;
+    var done = false;
+    function markLeft() { left = true; }
+    function finish(reason) {
+      if (done) return;
+      done = true;
+      window.removeEventListener("beforeunload", markLeft);
+      window.removeEventListener("pagehide", markLeft);
+      document.removeEventListener("securitypolicyviolation", onViolation);
+      if (reason) fail(eventName, reason);
+    }
+    function onViolation(e) {
+      var directive = String(e.effectiveDirective || e.violatedDirective || "");
+      if (directive.indexOf("form-action") === 0) {
+        finish("blocked by the page's security policy (form-action)");
+      }
+    }
+    window.addEventListener("beforeunload", markLeft);
+    window.addEventListener("pagehide", markLeft);
+    document.addEventListener("securitypolicyviolation", onViolation);
+    start();
+    setTimeout(function () { finish(left ? null : "browser did not leave the page"); }, CONFIG.navigationTimeoutMs);
+  }
+
   /* ------------------------------------------------------------- HANDLERS */
   function handleBooking(eventName, event) {
     try {
@@ -156,7 +191,9 @@
       var method = String(globals.method || "post").toUpperCase();
 
       // Record "submitted" first: once the form submits, this page is gone.
-      return report(eventName, "submitted").then(function () { postForm(method, globals.url, fields); });
+      return report(eventName, "submitted").then(function () {
+        navigateAndWatch(eventName, function () { postForm(method, globals.url, fields); });
+      });
     } catch (err) {
       return fail(eventName, "handler error: " + (err && err.message));
     }
@@ -176,7 +213,9 @@
       }
       var problem = checkUrl(url, CONFIG.sreacHosts);
       if (problem) return fail(eventName, problem);
-      return report(eventName, "submitted").then(function () { window.location.href = url; });
+      return report(eventName, "submitted").then(function () {
+        navigateAndWatch(eventName, function () { window.location.href = url; });
+      });
     } catch (err) {
       return fail(eventName, "handler error: " + (err && err.message));
     }

@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="robots" content="noindex" />
+<title>Automated test harness, with a form-blocking security policy (sandbox only)</title>
+<!-- TEST ONLY: enableProgrammaticControl lets a test script drive the chat (sendMessage/getMessages).
+     Never copy this setting into the MAS website snippet — any script on a page could then read the chat. -->
+<meta http-equiv="Content-Security-Policy" content="form-action 'self'" />
+<script>window.adaSettings = { enableProgrammaticControl: true };</script>
+<script src="ada-booking-handler.js"></script>
+<script id="__ada" data-handle="malaysiaairlines-sandbox" src="https://static.ada.support/embed2.js" async></script>
+</head>
+<body><p>Automated end-to-end test harness for the malaysiaairlines-sandbox booking flow. Not for customers.</p></body>
+</html>
